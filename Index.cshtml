@@ -1,0 +1,278 @@
+﻿@model Sulakkhana_Contacts.Models.Contacts
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+<h2>Contact Information</h2>
+
+<br />
+<div class="per_info">
+
+    @Html.HiddenFor(c => c.ContactID)
+
+
+    <div class="row">
+        <label class="col-md-2 control-label">Name :</label>
+        <div class="col-md-5">
+            @Html.TextBoxFor(c => c.Name)
+        </div>
+    </div>
+
+    <div class="row">
+        <label class="col-md-2 control-label">Address :</label>
+        <div class="col-md-5">
+            @Html.TextBoxFor(c => c.Address)
+        </div>
+    </div>
+
+    <div class="row">
+        <label class="col-md-2 control-label">Telephone : </label>
+        <div class="col-md-5">
+            @Html.TextBoxFor(c => c.Tel)
+        </div>
+    </div>
+
+    <div class="row">
+        <label class="col-md-2 control-label">Mobile :</label>
+        <div class="col-md-5">
+            @Html.TextBoxFor(c => c.Mobile)
+        </div>
+    </div>
+
+    <div class="row">
+        <label class="col-md-2 control-label">Email :</label>
+        <div class="col-md-5">
+            @Html.TextBoxFor(c => c.Email)
+        </div>
+    </div>
+
+    <div class="row">
+        <label class="col-md-2 control-label">Country :</label>
+        <div class="col-md-5">
+            @Html.DropDownList("FromCountries", new SelectList(Enumerable.Empty<SelectListItem>()))
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-2">
+            <button id="btnNew" name="btnNew" class="btn btn-primary">New</button>
+        </div>
+        <div class="col-md-2">
+            <button id="btnSave" name="btnSave" class="btn btn-primary">Save</button>
+        </div>
+        <div class="col-md-2">
+            <button id="btnUpdate" name="btnUpdate" class="btn btn-primary">Update</button>
+        </div>
+        <div class="col-md-2">
+            <button id="btnDelete" name="btnDelete" class="btn btn-primary">Delete</button>
+        </div>
+    </div>
+
+
+</div>
+<br/>
+<div>
+    <table class="table table-bordered" id="tblContacts">
+            <tr>
+                <th style="display:none;">
+                    ContactID
+                </th>
+                <th>
+                    Name
+                </th>
+                <th>
+                    Address
+                </th>
+                <th>
+                    Telephone
+                </th>
+                <th>
+                    Mobile
+                </th>
+                <th>
+                    Email
+                </th>
+                <th>
+                    Country
+                </th>
+            </tr>
+        
+    </table>
+
+</div>
+
+<style>
+    .per_info {
+        margin-left: 20px;
+        margin-right: 20px;
+    }
+
+    .row {
+        margin-bottom: 15px;
+    }
+</style>
+
+<script>
+
+    $(document).ready(function () {
+
+        $.ajax({
+            url: '@Url.Action("GetCountries", "Contacts")',
+            type: "GET",
+            contentType: "application/json; charset=utf-8",
+            datatype: JSON,
+            success: function (result) {
+                $(result).each(function () {
+                    $("#FromCountries").append($("<option></option>").val(this.CountryID).html(this.Country));
+                });
+            },
+            error: function (data) { }
+        });
+
+        GetContacts();
+
+    });
+
+    function GetContacts() {
+
+        $.get('/Contacts/GetContacts', {}, function (data) {
+            var tblContacts = $("#tblContacts");
+            $.each(data, function (index, item) {
+                var tr = $("<tr></tr>");
+                tr.html(("<td style=display:none;>" + item.ContactID + "</td>")
+                + " " + ("<td>" + item.Name + "</td>")
+                + " " + ("<td>" + item.Address + "</td>")
+                + " " + ("<td>" + item.Tel + "</td>")
+                + " " + ("<td>" + item.Mobile + "</td>")
+                + " " + ("<td>" + item.Email + "</td>")
+                + " " + ("<td>" + item.Country + "</td>"));
+                tblContacts.append(tr);
+            });
+        });
+    }
+
+    var table = document.getElementById('tblContacts');
+
+    for (var i = 1; i < table.rows.length; i++) {
+        table.rows[i].onclick = function () {
+            //rIndex = this.rowIndex;
+            document.getElementById("ContactID").value = this.cells[0].innerHTML;
+            document.getElementById("Name").value = this.cells[1].innerHTML;
+            document.getElementById("Address").value = this.cells[2].innerHTML;
+            document.getElementById("Tel").value = this.cells[3].innerHTML;
+            document.getElementById("Mobile").value = this.cells[4].innerHTML;
+            document.getElementById("Email").value = this.cells[5].innerHTML;
+            document.getElementById("Country").value = this.cells[6].innerHTML;
+        };
+    }
+
+    $("#btnSave").click(function () {
+        if ($("#Name").val() == '')
+        {
+            alert("Please enter name");
+        }
+       if($("#Mobile").val() =='')
+        {
+            alert("Please enter mobile no");
+        }
+       if ($("#FromCountries").val() == '')
+        {
+            alert("Please select country");
+        }
+
+        $.ajax({
+            type: "POST",
+            url: '@Url.Action("CreateContact", "Contacts")',
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify({
+
+                Name: $("#Name").val(),
+                Address: $("#Address").val(),
+                Tel: $("#Tel").val(),
+                Mobile: $("#Mobile").val(),
+                Email: $("#Email").val(),
+                CountryID: $("#FromCountries").val()
+            }),
+            dataType: "json",
+
+            success: AddContactOnSuccess
+        });
+        
+
+    });
+
+    function AddContactOnSuccess() {
+
+        alert("Add contact Successfully");
+    }
+
+    $("#btnNew").click(function () {
+  
+        document.getElementById("ContactID").value = '';
+        document.getElementById("Name").value = '';
+        document.getElementById("Address").value = '';
+        document.getElementById("Tel").value = '';
+        document.getElementById("Mobile").value = '';
+        document.getElementById("Email").value = '';
+
+    });
+
+    $("#btnUpdate").click(function () {
+
+        $.ajax({
+            type: "POST",
+            url: '@Url.Action("UpdateContact", "Contacts")',
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify({
+
+                Name: $("#Name").val(),
+                Address: $("#Address").val(),
+                Tel: $("#Tel").val(),
+                Mobile: $("#Mobile").val(),
+                Email: $("#Email").val(),
+                CountryID: $("#FromCountries").val()
+            }),
+            dataType: "json",
+
+            success: UpdateContactOnSuccess
+        });
+
+    });
+
+    function UpdateContactOnSuccess() {
+
+        alert("Update contact Successfully");
+    }
+   
+    $("#btnDelete").click(function () {
+
+        alert("Are you sure to delete contact?");
+
+        $.ajax({
+            type: "POST",
+            url: '@Url.Action("DeleteContact", "Contacts")',
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify({
+
+                ContactID: $("#ContactID").val()               
+            }),
+            dataType: "json",
+
+            success: DeleteContactOnSuccess
+        });
+
+    });
+
+    function DeleteContactOnSuccess() {
+
+        alert("Delete contact Successfully");
+    }
+</script>
+
+
+
